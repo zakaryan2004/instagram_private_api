@@ -18,6 +18,7 @@ class Constants(object):
     PHONE_RESOLUTION = '1440x2560'
     PHONE_CHIPSET = 'samsungexynos8890'
     VERSION_CODE = '138226743'
+    USER_AGENT = "Instagram 76.0.0.15.395 Android (24/7.0; 640dpi; 1440x2560; samsung; SM-G930F; herolte; samsungexynos8890; en_US; 138226743"
 
     USER_AGENT_FORMAT = \
         'Instagram {app_version} Android ({android_version:d}/{android_release}; ' \

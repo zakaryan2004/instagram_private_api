@@ -123,41 +123,8 @@ class Client(AccountsEndpointsMixin, DiscoverEndpointsMixin, FeedEndpointsMixin,
             kwargs.pop('application_id', None) or user_settings.get('application_id') or
             self.APPLICATION_ID)
 
-        # to maintain backward compat for user_agent kwarg
-        custom_ua = kwargs.pop('user_agent', '') or user_settings.get('user_agent')
-        if custom_ua:
-            self.user_agent = custom_ua
-        else:
-            self.app_version = (
-                kwargs.pop('app_version', None) or user_settings.get('app_version') or
-                Constants.APP_VERSION)
-            self.android_release = (
-                kwargs.pop('android_release', None) or user_settings.get('android_release') or
-                Constants.ANDROID_RELEASE)
-            self.android_version = int(
-                kwargs.pop('android_version', None) or user_settings.get('android_version') or
-                Constants.ANDROID_VERSION)
-            self.phone_manufacturer = (
-                kwargs.pop('phone_manufacturer', None) or user_settings.get('phone_manufacturer') or
-                Constants.PHONE_MANUFACTURER)
-            self.phone_device = (
-                kwargs.pop('phone_device', None) or user_settings.get('phone_device') or
-                Constants.PHONE_DEVICE)
-            self.phone_model = (
-                kwargs.pop('phone_model', None) or user_settings.get('phone_model') or
-                Constants.PHONE_MODEL)
-            self.phone_dpi = (
-                kwargs.pop('phone_dpi', None) or user_settings.get('phone_dpi') or
-                Constants.PHONE_DPI)
-            self.phone_resolution = (
-                kwargs.pop('phone_resolution', None) or user_settings.get('phone_resolution') or
-                Constants.PHONE_RESOLUTION)
-            self.phone_chipset = (
-                kwargs.pop('phone_chipset', None) or user_settings.get('phone_chipset') or
-                Constants.PHONE_CHIPSET)
-            self.version_code = (
-                kwargs.pop('version_code', None) or user_settings.get('version_code') or
-                Constants.VERSION_CODE)
+        self.user_agent = (
+            kwargs.pop('user_agent', '') or user_settings.get('user_agent') or Constants.USER_AGENT)
 
         cookie_string = kwargs.pop('cookie', None) or user_settings.get('cookie')
         cookie_jar = ClientCookieJar(cookie_string=cookie_string)
@@ -222,39 +189,6 @@ class Client(AccountsEndpointsMixin, DiscoverEndpointsMixin, FeedEndpointsMixin,
             'cookie': self.cookie_jar.dump(),
             'created_ts': int(time.time())
         }
-
-    @property
-    def user_agent(self):
-        """Returns the useragent string that the client is currently using."""
-        return Constants.USER_AGENT_FORMAT.format(**{
-            'app_version': self.app_version,
-            'android_version': self.android_version,
-            'android_release': self.android_release,
-            'brand': self.phone_manufacturer,
-            'device': self.phone_device,
-            'model': self.phone_model,
-            'dpi': self.phone_dpi,
-            'resolution': self.phone_resolution,
-            'chipset': self.phone_chipset,
-            'version_code': self.version_code})
-
-    @user_agent.setter
-    def user_agent(self, value):
-        """Override the useragent string with your own"""
-        mobj = re.search(Constants.USER_AGENT_EXPRESSION, value)
-        if not mobj:
-            raise ValueError('User-agent specified does not fit format required: {0!s}'.format(
-                Constants.USER_AGENT_EXPRESSION))
-        self.app_version = mobj.group('app_version')
-        self.android_release = mobj.group('android_release')
-        self.android_version = int(mobj.group('android_version'))
-        self.phone_manufacturer = mobj.group('manufacturer')
-        self.phone_device = mobj.group('device')
-        self.phone_model = mobj.group('model')
-        self.phone_dpi = mobj.group('dpi')
-        self.phone_resolution = mobj.group('resolution')
-        self.phone_chipset = mobj.group('chipset')
-        self.version_code = mobj.group('version_code')
 
     @staticmethod
     def generate_useragent(**kwargs):
@@ -392,18 +326,18 @@ class Client(AccountsEndpointsMixin, DiscoverEndpointsMixin, FeedEndpointsMixin,
     def default_headers(self):
         return {
             'User-Agent': self.user_agent,
-            'Connection': 'close',
-            'Accept': '*/*',
-            'Accept-Language': 'en-US',
-            'Accept-Encoding': 'gzip, deflate',
-            'X-IG-Capabilities': self.ig_capabilities,
-            'X-IG-Connection-Type': 'WIFI',
-            'X-IG-Connection-Speed': '{0:d}kbps'.format(random.randint(1000, 5000)),
-            'X-IG-App-ID': self.application_id,
-            'X-IG-Bandwidth-Speed-KBPS': '-1.000',
-            'X-IG-Bandwidth-TotalBytes-B': '0',
-            'X-IG-Bandwidth-TotalTime-MS': '0',
-            'X-FB-HTTP-Engine': Constants.FB_HTTP_ENGINE,
+            # 'Connection': 'close',
+            # 'Accept': '*/*',
+            # 'Accept-Language': 'en-US',
+            # 'Accept-Encoding': 'gzip, deflate',
+            # 'X-IG-Capabilities': self.ig_capabilities,
+            # 'X-IG-Connection-Type': 'WIFI',
+            # 'X-IG-Connection-Speed': '{0:d}kbps'.format(random.randint(1000, 5000)),
+            # 'X-IG-App-ID': self.application_id,
+            # 'X-IG-Bandwidth-Speed-KBPS': '-1.000',
+            # 'X-IG-Bandwidth-TotalBytes-B': '0',
+            # 'X-IG-Bandwidth-TotalTime-MS': '0',
+            # 'X-FB-HTTP-Engine': Constants.FB_HTTP_ENGINE,
         }
 
     @property
@@ -500,7 +434,7 @@ class Client(AccountsEndpointsMixin, DiscoverEndpointsMixin, FeedEndpointsMixin,
         headers = self.default_headers
         data = None
         if params or params == '':
-            headers['Content-type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
+            # headers['Content-type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
             if params == '':    # force post if empty string
                 data = ''.encode('ascii')
             else:
@@ -508,13 +442,14 @@ class Client(AccountsEndpointsMixin, DiscoverEndpointsMixin, FeedEndpointsMixin,
                     json_params = json.dumps(params, separators=(',', ':'))
                     hash_sig = self._generate_signature(json_params)
                     post_params = {
-                        'ig_sig_key_version': self.key_version,
+                        # 'ig_sig_key_version': self.key_version,
                         'signed_body': hash_sig + '.' + json_params
                     }
                 else:
                     # direct form post
                     post_params = params
-                data = compat_urllib_parse.urlencode(post_params).encode('ascii')
+                data = bytes(compat_urllib_parse.urlencode(post_params), 'utf-8')
+                # data = compat_urllib_parse.urlencode(post_params).encode('ascii')
 
         req = compat_urllib_request.Request(url, data, headers=headers)
         try:
